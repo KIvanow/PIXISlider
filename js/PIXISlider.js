@@ -1,6 +1,7 @@
 var Slider = function( settings ){
-	this.center = (settings && settings.center) || this.parent.getBounds().height / 2;
 	this.slideAxis = (settings && settings.slideAxis) || 'y';
+	this.center = (settings && settings.center) || ( this.slideAxis == 'y' ? this.parent.getBounds().height / 2 : this.parent.getBounds().width / 2);
+	this.margin = (settings && settings.margin ) || 0;
 	this.visual = new PIXI.Container();
 	this.events = {
 		mousedown: new Signal(),
@@ -41,9 +42,9 @@ Slider.prototype.addElement = function( element ){
 	this.visual.addChild( element );
 	this.visual.children[ this.visual.children.length - 1 ][ this.slideAxis ] = this.topOffset;
 	if( this.slideAxis == 'y' ){
-		this.topOffset += this.visual.children[ this.visual.children.length - 1 ].getBounds().height;
+		this.topOffset += this.visual.children[ this.visual.children.length - 1 ].getBounds().height + this.margin;
 	} else if( this.slideAxis == 'x' ){
-		this.topOffset += this.visual.children[ this.visual.children.length - 1 ].getBounds().width;
+		this.topOffset += this.visual.children[ this.visual.children.length - 1 ].getBounds().width + this.margin;
 	}		
 };
 
