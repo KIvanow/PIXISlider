@@ -26,7 +26,8 @@ var Example = function(){
 	var slider = new Slider( { 
 		event: this.stage.events.requestAnimFrame, 
 		slideAxis: 'y', 
-		center: config.height / 2
+		center: config.height / 2,
+		margin: 10,
 	} );
 	for (var i = 0; i < 100; i++) {
 		var text = new PIXI.Text( 'test' + i, {fill: "#d8d7c2", font: 'bold 40px Arial'} );
