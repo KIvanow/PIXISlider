@@ -3,6 +3,9 @@ Slider element for PIXI. It supports sliding on either y or x axis. It handles b
 
 It is dependant on http://greensock.com/tweenmax for the slight animation, https://millermedeiros.github.io/js-signals/ for event dispatching and ofcourse http://www.pixijs.com/ version3
 
+##Full Example
+http://kivanow.github.io/PIXISlider/
+
 ##Properties
   1. ``` event ``` requestAtnimationFrame equivalent
   2. ``` slideAxis ``` the axis to slide. Y by default
