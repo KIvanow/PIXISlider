@@ -45,11 +45,7 @@ var Example = function(){
 
         this.renderer.render(this.stage);
 
-        if( this.score ){
-        	this.score.update( this.getScore(), this.getDuration() );
-        }
-
-        this.stage.events.requestAnimFrame.dispatch();
+       this.stage.events.requestAnimFrame.dispatch();
     }
 }
 
