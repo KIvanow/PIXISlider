@@ -5,7 +5,7 @@ var Slider = function( settings ){
 	this.visual = new PIXI.Container();
 	this.originalSpeed = 0.5;
 	this.timeLineHolder = [];
-	this.delta = { x: 0, t: 0 };
+	this.delta = { x: 0, y: 0, t: 0 };
 	this.events = {
 		mousedown: new Signal(),
 		mouseup: new Signal(),
