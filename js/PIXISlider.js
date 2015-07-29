@@ -3,6 +3,9 @@ var Slider = function( settings ){
 	this.center = (settings && settings.center) || ( this.slideAxis == 'y' ? this.parent.getBounds().height / 2 : this.parent.getBounds().width / 2);
 	this.margin = (settings && settings.margin ) || 0;
 	this.visual = new PIXI.Container();
+	this.originalSpeed = 0.5;
+	this.timeLineHolder = [];
+	this.delta = { x: 0, t: 0 };
 	this.events = {
 		mousedown: new Signal(),
 		mouseup: new Signal(),
@@ -48,58 +51,129 @@ Slider.prototype.addElement = function( element ){
 	}		
 };
 
+Slider.prototype.clearTimelines = function(){
+	for (var i = 0; i < this.timeLineHolder.length; i++) {
+            this.timeLineHolder[i].eventCallback('onComplete', null );
+            this.timeLineHolder[i].clear();
+        }
+        this.timeLineHolder.length = 0;
+	this.dragging = false;
+	this.data = false;
+	this.speed = this.originalSpeed;
+}
+
+Slider.prototype.reset = function(){
+	this.clearTimelines();
+};
+Slider.prototype.select = function( index, dur, callback ){
+        var duration = dur != undefined ? dur : this.originalSpeed;
+	if( this.slideAxis == 'x' ){
+	        var t = new TimelineMax().to(this.visual, duration, { x : Math.round(this.visual.x + this.getDistanceToChild( index ).distance), force3D:true, onComplete: function(){
+                    if( callback )
+                        callback();
+                }});
+	} else {
+	        var t = new TimelineMax().to(this.visual, duration, { y : Math.round(this.visual.y + this.getDistanceToChild( index ).distance), force3D:true, onComplete: function(){
+                    if( callback )
+                        callback();
+                }});
+	}
+        this.timeLineHolder.push(t);
+        for( var i = 0; i < this.visual.children.length; i++ ){
+            if( i != index ){
+                
+            } else {
+                
+            }
+        }
+};
+
 Slider.prototype.addListeners = function(){
 	this.visual.interactive = true;
 
 	var that = this;		
 	this.visual.mousedown = this.visual.touchstart = function(data){
-		this.updateTransform();
+		this.reset();
+		this.visual.updateTransform();
 		this.dragging = true;
-		that.events.mousedown.dispatch( data );
-	};
+		this.delta.t = data.data.originalEvent.timeStamp;
+	        this.delta.x = data.data.global.x
+	        this.delta.y = data.data.global.y
+		that.events.mousedown.dispatch( data );		
+	}.bind(this);
 
 	this.visual.mouseup = this.visual.mouseupoutside = this.visual.touchend = this.visual.touchendoutside = function(data){
-		this.dragging = false;
-		this.data = null;
-		if( that.slideAxis == 'y' ){		
-			new TimelineMax().to( that.visual, 0.5, { y: Math.round( that.visual[ that.slideAxis ] + that.findClosestChild().distance), force3D:true });
-		} else if ( that.slideAxis == 'x' ){
-			new TimelineMax().to( that.visual, 0.5, { x: Math.round( that.visual[ that.slideAxis ] + that.findClosestChild().distance), force3D:true });
+		if( !this.dragging )
+		        return;
+
+	        this.dragging = false;
+                this.data = null;
+
+		this.delta.t = data.data.originalEvent.timeStamp - this.delta.t;
+	        this.delta.x = data.data.global.x - this.delta.x;
+	        this.delta.y = data.data.global.y - this.delta.y;
+
+		if( Math.abs( this.delta[this.slideAxis] ) < this.visual.children[ this.visual.children.length - 1 ].getBounds()[ this.slideAxis == 'x' ? 'width' : 'height' ] * 1.2  ){
+		    this.index = this.findClosestChild().index + ( data.data.global[ this.slideAxis ] - this.center > 0 ? -1 : 1);
+		} else if( this.delta.t > 200){
+		    this.index = this.findClosestChild().index + (this.delta[ this.slideAxis ] > 0 ? -1 : 1);			
+	        } else if( this.delta.t < 200 ){
+		    this.index = this.findClosestChild().index - Math.round( this.delta[that.slideAxis] / this.delta.t );
+    	        }
+
+		if( this.index < 0 ){
+		    this.index = 0;
+		} else if( this.index > this.visual.children.length - 1 ){
+		    this.index = this.visual.children.length - 1;
 		}
+
 		
+		this.select( this.index );
 		that.events.mouseup.dispatch( data );
-	};
+	}.bind(this);
 
 	// set the callbacks for when the mouse or a touch moves
 	this.visual.mousemove = this.visual.touchmove = function(data){
 		if(this.dragging && this.data ){
-			this[ that.slideAxis ] = this[ that.slideAxis ] - ( this.data - data.data.global[ that.slideAxis ]);
+			this.visual[ that.slideAxis ] = this.visual[ that.slideAxis ] - ( this.data - data.data.global[ that.slideAxis ]);
 		}
 
 		this.data = data.data.global[ that.slideAxis ];
 		that.events.mousemove.dispatch( data );
-	}
+	}.bind(this);
 };
 
 Slider.prototype.findClosestChild = function(){		
 	var animTarget = { distance : false, index: 0};
-	for( var i = 0; i < this.visual.children.length; i++ ){
-		if( animTarget.distance === false || Math.abs( this.center - (this.visual.children[i].getBounds()[ this.slideAxis ] + this.visual.children[i].getBounds().height / 2) ) < animTarget.distance ){
-			animTarget.distance = this.center - (this.visual.children[i].getBounds()[ this.slideAxis ] + this.visual.children[i].getBounds().height / 2);
-			animTarget.index = i;
+	var animTarget = { distance : 100000, index: 0};
+        this.visual.updateTransform();
+        for( var i = 0; i < this.visual.children.length; i++ ){
+		if( this.slideAxis == 'x' ){
+		    if( Math.abs( this.center - ( this.visual.children[i].getBounds().x + this.visual.children[i].getBounds().width / 2 ) ) < animTarget.distance ){
+		        animTarget.distance = this.center - (this.visual.children[i].getBounds().x + this.visual.children[i].getBounds().width / 2);
+		        animTarget.index = i;
+		    }
+		} else if(this.slideAxis == 'y' ){
+		    if( Math.abs( this.center - ( this.visual.children[i].getBounds().y + this.visual.children[i].getBounds().height / 2 ) ) < animTarget.distance ){
+		        animTarget.distance = this.center - (this.visual.children[i].getBounds().y + this.visual.children[i].getBounds().height / 2);
+		        animTarget.index = i;
+		    }
 		}
-	}
+        }
 
-	return animTarget;
+        return animTarget;
 };
 
-Slider.prototype.getDistanceToChild = function( index ){
-    var center = this.renderer.view.width / 2;
+Slider.prototype.getDistanceToChild = function( index ){    
     var animTarget = {};
     this.visual.updateTransform();
     this.visual.children[index].updateTransform();
-    animTarget.distance = center - (this.visual.children[index].getBounds().x + this.visual.children[index].getBounds().width / 2);
+	if( this.slideAxis == 'x' ){
+		    animTarget.distance = this.center - (this.visual.children[index].getBounds().x + this.visual.children[index].getBounds().width / 2);
+	} else {
+		    animTarget.distance = this.center - (this.visual.children[index].getBounds().y + this.visual.children[index].getBounds().height / 2);
+	}
     animTarget.index = index;
-
+	debugger;
     return animTarget;
 };
