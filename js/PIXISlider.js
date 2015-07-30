@@ -148,17 +148,11 @@ Slider.prototype.findClosestChild = function(){
 	var animTarget = { distance : 100000, index: 0};
         this.visual.updateTransform();
         for( var i = 0; i < this.visual.children.length; i++ ){
-		if( this.slideAxis == 'x' ){
-		    if( Math.abs( this.center - ( this.visual.children[i].getBounds().x + this.visual.children[i].getBounds().width / 2 ) ) < animTarget.distance ){
-		        animTarget.distance = this.center - (this.visual.children[i].getBounds().x + this.visual.children[i].getBounds().width / 2);
-		        animTarget.index = i;
-		    }
-		} else if(this.slideAxis == 'y' ){
-		    if( Math.abs( this.center - ( this.visual.children[i].getBounds().y + this.visual.children[i].getBounds().height / 2 ) ) < animTarget.distance ){
-		        animTarget.distance = this.center - (this.visual.children[i].getBounds().y + this.visual.children[i].getBounds().height / 2);
-		        animTarget.index = i;
-		    }
-		}
+	    if( Math.abs( this.center - ( this.visual.children[i].getBounds()[this.slideAxis] + this.visual.children[i].getBounds()[this.slideAxis == 'x' ? 'width' : 'height'] / 2 ) ) < animTarget.distance ){
+	        animTarget.distance = this.center - (this.visual.children[i].getBounds()[this.slideAxis] + this.visual.children[i].getBounds()[this.slideAxis == 'x' ? 'width' : 'height'] / 2);
+	        animTarget.index = i;
+	    }
+		
         }
 
         return animTarget;
@@ -168,12 +162,9 @@ Slider.prototype.getDistanceToChild = function( index ){
     var animTarget = {};
     this.visual.updateTransform();
     this.visual.children[index].updateTransform();
-	if( this.slideAxis == 'x' ){
-		    animTarget.distance = this.center - (this.visual.children[index].getBounds().x + this.visual.children[index].getBounds().width / 2);
-	} else {
-		    animTarget.distance = this.center - (this.visual.children[index].getBounds().y + this.visual.children[index].getBounds().height / 2);
-	}
+
+    animTarget.distance = this.center - (this.visual.children[index].getBounds()[this.slideAxis] + this.visual.children[index].getBounds()[this.slideAxis == 'x' ? 'width' : 'height'] / 2);
     animTarget.index = index;
-	debugger;
+
     return animTarget;
 };
