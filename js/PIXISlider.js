@@ -168,3 +168,13 @@ Slider.prototype.getDistanceToChild = function( index ){
 
     return animTarget;
 };
+
+Slider.prototype.animateChildren = function( settings, callback, duration ){
+	var tmSettings = { force3D:true, onComplete: function(){ callback && callback(); callback = function(){} } };
+	$.extend( tmSettings, settings );
+
+	for( var i = 0; i < this.visual.children.length; i++ ){			
+		var t = new TimelineMax().to(this.visual.children[i], duration || 1, tmSettings );	        
+        this.timeLineHolder.push(t);
+	}		
+};
